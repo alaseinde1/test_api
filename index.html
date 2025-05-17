@@ -1,0 +1,42 @@
+import requests
+
+def lookup_api_data(api_url, params=None, headers=None):
+    """
+    Makes a GET request to an API endpoint and returns the response JSON.
+
+    Args:
+        api_url (str): The URL of the API endpoint.
+        params (dict, optional): Query parameters to include in the request.
+        headers (dict, optional): Custom headers to include in the request.
+
+    Returns:
+        dict: Parsed JSON response from the API.
+    """
+    try:
+        response = requests.get(api_url, params=params, headers=headers)
+        response.raise_for_status()  # Raises HTTPError for bad responses
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error during API request: {e}")
+        return None
+
+# Example usage with real API
+if __name__ == "__main__":
+    test_url = "https://api.open-meteo.com/v1/forecast"
+    test_params = {
+        "latitude": 52.52,  # Berlin
+        "longitude": 13.41,
+        "hourly": "temperature_2m"
+    }
+
+    result = lookup_api_data(test_url, params=test_params)
+    if result:
+        hourly_data = result.get("hourly", {})
+        temperatures = hourly_data.get("temperature_2m", [])
+        timestamps = hourly_data.get("time", [])
+
+        print("Hourly temperature forecast:")
+        for time, temp in zip(timestamps[:10], temperatures[:10]):  # Show first 10 entries
+            print(f"At {time}, temperature was {temp}°C")
+    else:
+        print("Failed to retrieve API data.")
