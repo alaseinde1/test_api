@@ -1,42 +1,44 @@
-import requests
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weather Forecast</title>
+<style>
+body { font-family: sans-serif; padding: 20px; }
+h1 { color: #2c3e50; }
+ul { padding-left: 20px; }
+</style>
+</head>
+<body>
+<h1>Hourly Temperature Forecast - Berlin</h1>
+<ul id="forecast">Loading...</ul>
 
-def lookup_api_data(api_url, params=None, headers=None):
-    """
-    Makes a GET request to an API endpoint and returns the response JSON.
+<script>
+async function getForecast() {
+const forecastList = document.getElementById('forecast');
 
-    Args:
-        api_url (str): The URL of the API endpoint.
-        params (dict, optional): Query parameters to include in the request.
-        headers (dict, optional): Custom headers to include in the request.
+try {
+const url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m";
+const response = await fetch(url);
+const data = await response.json();
 
-    Returns:
-        dict: Parsed JSON response from the API.
-    """
-    try:
-        response = requests.get(api_url, params=params, headers=headers)
-        response.raise_for_status()  # Raises HTTPError for bad responses
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error during API request: {e}")
-        return None
+const times = data.hourly.time;
+const temps = data.hourly.temperature_2m;
 
-# Example usage with real API
-if __name__ == "__main__":
-    test_url = "https://api.open-meteo.com/v1/forecast"
-    test_params = {
-        "latitude": 52.52,  # Berlin
-        "longitude": 13.41,
-        "hourly": "temperature_2m"
-    }
+forecastList.innerHTML = "";
 
-    result = lookup_api_data(test_url, params=test_params)
-    if result:
-        hourly_data = result.get("hourly", {})
-        temperatures = hourly_data.get("temperature_2m", [])
-        timestamps = hourly_data.get("time", [])
+for (let i = 0; i < 10; i++) {
+const item = document.createElement("li");
+item.textContent = `At ${times[i]} → ${temps[i]}°C`;
+forecastList.appendChild(item);
+}
+} catch (error) {
+forecastList.innerHTML = "<li>Error loading forecast.</li>";
+console.error("API Error:", error);
+}
+}
 
-        print("Hourly temperature forecast:")
-        for time, temp in zip(timestamps[:10], temperatures[:10]):  # Show first 10 entries
-            print(f"At {time}, temperature was {temp}°C")
-    else:
-        print("Failed to retrieve API data.")
+getForecast();
+</script>
+</body>
+</html>
