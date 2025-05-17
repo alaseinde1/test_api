@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Weather Forecast</title>
-<style>
-body { font-family: sans-serif; padding: 20px; }
-h1 { color: #2c3e50; }
-ul { padding-left: 20px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Weather Forecast</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    h1 { color: #2c3e50; }
+    ul { padding-left: 20px; }
+    input, button { margin: 5px; padding: 5px; }
+  </style>
 </head>
 <body>
-<h1>Hourly Temperature Forecast - Berlin</h1>
-<ul id="forecast">Loading...</ul>
+  <h1>Hourly Temperature Forecast</h1>
 
-<script>
-async function getForecast() {
-const forecastList = document.getElementById('forecast');
+  <div>
+    <label>Latitude: <input type="text" id="lat" value="52.52"></label>
+    <label>Longitude: <input type="text" id="lon" value="13.41"></label>
+    <button onclick="getForecast()">Get Forecast</button>
+  </div>
 
-try {
-const url = "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m";
-const response = await fetch(url);
-const data = await response.json();
+  <h2 id="city">City: Berlin</h2>
+  <ul id="forecast">Loading...</ul>
 
-const times = data.hourly.time;
-const temps = data.hourly.temperature_2m;
+  <script>
+    async function getCityName(lat, lon) {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+      const data = await res.json();
+      return data.address.city || data.address.town || data.address.village || "Unknown";
+    }
 
-forecastList.innerHTML = "";
+    async function getForecast() {
+      const forecastList = document.getElementById('forecast');
+      const cityTitle = document.getElementById('city');
+      const lat = document.getElementById('lat').value;
+      const lon = document.getElementById('lon').value;
 
-for (let i = 0; i < 10; i++) {
-const item = document.createElement("li");
-item.textContent = `At ${times[i]} → ${temps[i]}°C`;
-forecastList.appendChild(item);
-}
-} catch (error) {
-forecastList.innerHTML = "<li>Error loading forecast.</li>";
-console.error("API Error:", error);
-}
-}
+      forecastList.innerHTML = 'Fetching data...';
 
-getForecast();
-</script>
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const cityName = await getCityName(lat, lon);
+        cityTitle.textContent = `City: ${cityName}`;
+
+        const times = data.hourly.time;
+        const temps = data.hourly.temperature_2m;
+
+        forecastList.innerHTML = "";
+
+        for (let i = 0; i < 10; i++) {
+          const item = document.createElement("li");
+          item.textContent = `At ${times[i]} → ${temps[i]}°C`;
+          forecastList.appendChild(item);
+        }
+      } catch (error) {
+        forecastList.innerHTML = "<li>Error loading forecast.</li>";
+        console.error("API Error:", error);
+      }
+    }
+
+    getForecast(); // load default forecast
+  </script>
 </body>
 </html>
